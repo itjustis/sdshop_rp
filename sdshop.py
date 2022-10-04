@@ -1,14 +1,28 @@
+#@markdown **Python Definitions**
 import json
 from IPython import display as disp
 import argparse, sys
 
 
+
 models_path = "/workspace/"
 output_path = "/workspace/"
 
+
+
 import os
 
-def init(huggin_token=''):
+sys.path.extend([
+    'src/taming-transformers',
+    'src/clip',
+    'stable-diffusion/',
+    'k-diffusion',
+    'pytorch3d-lite',
+    'AdaBins',
+    'MiDaS',
+])
+
+def run_server(hf='',nt=''):
     try:
         print('setup')
         if not os.path.exists(models_path + '/sd-v1-4.ckpt'):
@@ -52,19 +66,6 @@ def init(huggin_token=''):
     except Exception as e:
         print (e)
 
-    disp.clear_output(wait=True)
-    print('...')
-sys.path.extend([
-    'src/taming-transformers',
-    'src/clip',
-    'stable-diffusion/',
-    'k-diffusion',
-    'pytorch3d-lite',
-    'AdaBins',
-    'MiDaS',
-])
-def run_server(hf='',nt=''):
-    init(hf)
     import gc, math, os, pathlib, subprocess, sys, time
     import cv2
     import numpy as np
