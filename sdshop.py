@@ -24,7 +24,7 @@ sys.path.extend([
 
 def run_server(hf='',nt=''):
     from IPython import display as disp
-    print('setup')
+    print('setup...')
     if not os.path.exists(models_path + '/sd-v1-4.ckpt'):
             os.makedirs(models_path, exist_ok=True)
             os.makedirs(output_path, exist_ok=True)
