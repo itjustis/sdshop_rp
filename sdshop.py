@@ -34,8 +34,8 @@ def run_server(hf='',nt=''):
                 import subprocess, time
                 print("Setting up environment...")
                 start_time = time.time()
-                print(m_args.huggin_face_token)
-                huggin_token="'Authorization: Bearer "+m_args.huggin_face_token+"'"
+                print(hf)
+                huggin_token="'Authorization: Bearer "+hf+"'"
                 #huggin_token="'Authorization: Bearer " + os.environ['HUGGIN_FACE_TOKEN']+"'"
                 os.system('wget --header='+huggin_token+' https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt')
 
