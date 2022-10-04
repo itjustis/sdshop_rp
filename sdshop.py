@@ -1,4 +1,4 @@
-#@markdown **Python Definitions**
+
 import json
 from IPython import display as disp
 import argparse, sys
@@ -37,8 +37,9 @@ def run_server(hf='',nt=''):
                 print(hf)
                 huggin_token="'Authorization: Bearer "+hf+"'"
                 #huggin_token="'Authorization: Bearer " + os.environ['HUGGIN_FACE_TOKEN']+"'"
-                os.popen('wget --header='+huggin_token+' https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt')
-                disp.clear_output()
+                print('downloading model...')
+                subprocess.run(['wget --header='+huggin_token+' https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt'], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+                
 
                 all_process = [
                     ['pip', 'install', 'torch==1.12.1+cu113', 'torchvision==0.13.1+cu113', '--extra-index-url', 'https://download.pytorch.org/whl/cu113'],
