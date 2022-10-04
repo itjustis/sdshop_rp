@@ -1,19 +1,16 @@
-#@markdown **Python Definitions**
 import json
 from IPython import display as disp
 import argparse, sys
 
 
-
 models_path = "/workspace/"
 output_path = "/workspace/"
 
-
-
 import os
 
-def init(huggin_token='',ngrok_token=''):
+def init(huggin_token=''):
     try:
+        print('setup')
         if not os.path.exists(models_path + '/sd-v1-4.ckpt'):
             os.makedirs(models_path, exist_ok=True)
             os.makedirs(output_path, exist_ok=True)
