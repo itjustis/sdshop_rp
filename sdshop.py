@@ -3,12 +3,8 @@ import json
 from IPython import display as disp
 import argparse, sys
 
-
-
 models_path = "/workspace/"
 output_path = "/workspace/"
-
-
 
 import os
 
@@ -64,11 +60,13 @@ def run_server(hf='',nt=''):
                     f.write('')
                 end_time = time.time()
                 print(f"Environment set up in {end_time-start_time:.0f} seconds")
-    run(nt)
+    if os.path.exists(models_path + '/sd-v1-4.ckpt'):
+        run(nt)
 def run(nt):
+    print('starting...')
     from IPython import display as disp
     import os
-    if not os.path.exists(models_path + '/sd-v1-4.ckpt'):
+    if os.path.exists(models_path + '/sd-v1-4.ckpt'):
             import gc, math, os, pathlib, subprocess, sys, time
             import cv2
             import numpy as np
