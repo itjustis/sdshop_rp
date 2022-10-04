@@ -23,6 +23,7 @@ sys.path.extend([
 ])
 
 def run_server(hf='',nt=''):
+    from IPython import display as disp
     print('setup')
     if not os.path.exists(models_path + '/sd-v1-4.ckpt'):
             os.makedirs(models_path, exist_ok=True)
@@ -36,7 +37,8 @@ def run_server(hf='',nt=''):
                 print(hf)
                 huggin_token="'Authorization: Bearer "+hf+"'"
                 #huggin_token="'Authorization: Bearer " + os.environ['HUGGIN_FACE_TOKEN']+"'"
-                os.system('wget --header='+huggin_token+' https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt')
+                os.popen('wget --header='+huggin_token+' https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt')
+                disp.clear_output()
 
                 all_process = [
                     ['pip', 'install', 'torch==1.12.1+cu113', 'torchvision==0.13.1+cu113', '--extra-index-url', 'https://download.pytorch.org/whl/cu113'],
@@ -61,8 +63,10 @@ def run_server(hf='',nt=''):
                     f.write('')
                 end_time = time.time()
                 print(f"Environment set up in {end_time-start_time:.0f} seconds")
-    run(nf)
-def run(nf):
+    run(nt)
+def run(nt):
+    from IPython import display as disp
+    import os
     if not os.path.exists(models_path + '/sd-v1-4.ckpt'):
             import gc, math, os, pathlib, subprocess, sys, time
             import cv2
