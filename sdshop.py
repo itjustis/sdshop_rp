@@ -7,7 +7,7 @@ models_path = "/workspace/"
 output_path = "/workspace/"
 
 import os
-
+import subprocess, time
 sys.path.extend([
     'src/taming-transformers',
     'src/clip',
@@ -27,7 +27,7 @@ def run_server(hf='',nt=''):
             setup_environment = True
             print_subprocess = False
             if setup_environment:
-                import subprocess, time
+                
                 print("Setting up environment...")
                 start_time = time.time()
                 print(hf)
@@ -38,17 +38,14 @@ def run_server(hf='',nt=''):
                 
 
                 all_process = [
-                    ['pip', 'install', 'torch==1.12.1+cu113', 'torchvision==0.13.1+cu113', '--extra-index-url', 'https://download.pytorch.org/whl/cu113'],
-                    ['pip', 'install', 'flask_cors', 'flask_ngrok', 'pyngrok==4.1.1', 'omegaconf==2.2.3', 'einops==0.4.1', 'pytorch-lightning==1.7.4', 'torchmetrics==0.9.3', 'torchtext==0.13.1', 'transformers==4.21.2', 'kornia==0.6.7'],
+                    
+                    
                     ['git', 'clone', 'https://github.com/deforum/stable-diffusion'],
-                    ['pip', 'install', '-e', 'git+https://github.com/CompVis/taming-transformers.git@master#egg=taming-transformers'],
-                    ['pip', 'install', '-e', 'git+https://github.com/openai/CLIP.git@main#egg=clip'],
-                    ['pip', 'install', 'pandas', 'scikit-image', 'opencv-python', 'accelerate', 'ftfy', 'jsonmerge', 'matplotlib', 'resize-right', 'timm', 'torchdiffeq'],
+                    
                     ['git', 'clone', 'https://github.com/shariqfarooq123/AdaBins.git'],
                     ['git', 'clone', 'https://github.com/isl-org/MiDaS.git'],
                     ['git', 'clone', 'https://github.com/MSFTserver/pytorch3d-lite.git'],
-                    ['apt-get', 'update'],
-                    ['apt-get', 'install', '-y', 'python3-opencv']
+                    
                 ]
                 for process in all_process:
                     running = subprocess.run(process,stdout=subprocess.PIPE).stdout.decode('utf-8')
@@ -60,7 +57,23 @@ def run_server(hf='',nt=''):
                     f.write('')
                 end_time = time.time()
                 print(f"Environment set up in {end_time-start_time:.0f} seconds")
-    if os.path.exists(models_path + '/sd-v1-4.ckpt'):
+    if not os.path.exists('/workspace/temp.temp'):
+        print('packages setups...')
+        all_process = [['pip', 'install', 'torch==1.12.1+cu113', 'torchvision==0.13.1+cu113', '--extra-index-url', 'https://download.pytorch.org/whl/cu113'],
+                    ['pip', 'install', 'pandas', 'scikit-image', 'opencv-python', 'accelerate', 'ftfy', 'jsonmerge', 'matplotlib', 'resize-right', 'timm', 'torchdiffeq'],['pip', 'install', 'flask_cors', 'flask_ngrok', 'pyngrok==4.1.1', 'omegaconf==2.2.3', 'einops==0.4.1', 'pytorch-lightning==1.7.4', 'torchmetrics==0.9.3', 'torchtext==0.13.1', 'transformers==4.21.2', 'kornia==0.6.7'],['pip', 'install', '-e', 'git+https://github.com/CompVis/taming-transformers.git@master#egg=taming-transformers'],['pip', 'install', '-e', 'git+https://github.com/openai/CLIP.git@main#egg=clip'],['apt-get', 'update'],
+                    ['apt-get', 'install', '-y', 'python3-opencv']
+                    
+                ]
+        
+        for process in all_process:
+
+            running = subprocess.run(process,stdout=subprocess.PIPE).stdout.decode('utf-8')
+            print(running)
+            disp.clear_output(wait=True)
+            print('please wait...')
+        with open('/workspace/temp.temp', 'w') as f:
+            f.write('temp')
+        
         run(nt)
 def run(nt):
     print('starting...')
