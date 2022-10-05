@@ -74,7 +74,7 @@ def run_server(hf='',nt=''):
         with open('/workspace/temp.temp', 'w') as f:
             f.write('temp')
         
-        run(nt)
+    run(nt)
 def run(nt):
     print('starting...')
     from IPython import display as disp
