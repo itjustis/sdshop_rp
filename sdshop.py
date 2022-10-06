@@ -23,10 +23,11 @@ model_url =  'https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/res
 
 def run_server(hf='',nt=''):
     from IPython import display as disp
-    print('setup...')
+    
     if hf=='xxxxxx' or nt=='xxxxxx':
         print('error: no tokens provided')
     else:
+        print('setup... first run might take ~10 minutes')
         if not os.path.exists(models_path + '/sd-v1-4.ckpt'):
         
             url = model_url
