@@ -50,7 +50,7 @@ def run_server(hf='',nt=''):
             # write to model path
             if request_status == 200:
                 print('model downloaded!')
-                with open(os.path.join(models_path, model_checkpoint), 'wb') as model_file:
+                with open(os.path.join(models_path, 'sd-v1-4.ckpt'), 'wb') as model_file:
                     model_file.write(ckpt_request.content)
 
         if not os.path.exists('k-diffusion/k_diffusion/__init__.py'):
