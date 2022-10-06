@@ -18,63 +18,95 @@ sys.path.extend([
     'MiDaS',
 ])
 
+model_sha256 = 'fe4efff1e174c627256e44ec2991ba279b3816e364b49f9be2abc0b3ff3f8556'
+model_url =  'https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt'
+
 def run_server(hf='',nt=''):
     from IPython import display as disp
     print('setup...')
-    if not os.path.exists(models_path + '/sd-v1-4.ckpt'):
-            os.makedirs(models_path, exist_ok=True)
-            os.makedirs(output_path, exist_ok=True)
-            setup_environment = True
-            print_subprocess = False
-            if setup_environment:
-                
-                print("Setting up environment...")
-                start_time = time.time()
-                print(hf)
-                huggin_token="'Authorization: Bearer "+hf+"'"
-                #huggin_token="'Authorization: Bearer " + os.environ['HUGGIN_FACE_TOKEN']+"'"
-                print('downloading model...')
-                subprocess.run(['wget --header='+huggin_token+' https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt'], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-                
-
-                all_process = [
-                    
-                    
-                    ['git', 'clone', 'https://github.com/deforum/stable-diffusion'],
-                    
-                    ['git', 'clone', 'https://github.com/shariqfarooq123/AdaBins.git'],
-                    ['git', 'clone', 'https://github.com/isl-org/MiDaS.git'],
-                    ['git', 'clone', 'https://github.com/MSFTserver/pytorch3d-lite.git'],
-                    
-                ]
-                for process in all_process:
-                    running = subprocess.run(process,stdout=subprocess.PIPE).stdout.decode('utf-8')
-                    if print_subprocess:
-                        print(running)
-
-                print(subprocess.run(['git', 'clone', 'https://github.com/deforum/k-diffusion/'], stdout=subprocess.PIPE).stdout.decode('utf-8'))
-                with open('k-diffusion/k_diffusion/__init__.py', 'w') as f:
-                    f.write('')
-                end_time = time.time()
-                print(f"Environment set up in {end_time-start_time:.0f} seconds")
-    if not os.path.exists('/workspace/temp.temp'):
-        print('packages setups...')
-        all_process = [['pip', 'install', 'torch==1.12.1+cu113', 'torchvision==0.13.1+cu113', '--extra-index-url', 'https://download.pytorch.org/whl/cu113'],
-                    ['pip', 'install', 'pandas', 'scikit-image', 'opencv-python', 'accelerate', 'ftfy', 'jsonmerge', 'matplotlib', 'resize-right', 'timm', 'torchdiffeq'],['pip', 'install', 'flask_cors', 'flask_ngrok', 'pyngrok==4.1.1', 'omegaconf==2.2.3', 'einops==0.4.1', 'pytorch-lightning==1.7.4', 'torchmetrics==0.9.3', 'torchtext==0.13.1', 'transformers==4.21.2', 'kornia==0.6.7'],['pip', 'install', '-e', 'git+https://github.com/CompVis/taming-transformers.git@master#egg=taming-transformers'],['pip', 'install', '-e', 'git+https://github.com/openai/CLIP.git@main#egg=clip'],['apt-get', 'update'],
-                    ['apt-get', 'install', '-y', 'python3-opencv']
-                    
-                ]
+    if nf=='xxxxxx' or nt=='xxxxxx':
+        print('error: no tokens provided')
+    else:
+        if not os.path.exists(models_path + '/sd-v1-4.ckpt'):
         
-        for process in all_process:
+            url = model_url
+            token=hf
 
-            running = subprocess.run(process,stdout=subprocess.PIPE).stdout.decode('utf-8')
-            print(running)
-            disp.clear_output(wait=True)
-            print('please wait...')
-        with open('/workspace/temp.temp', 'w') as f:
-            f.write('temp')
-        
-    run(nt)
+            headers = {"Authorization": "Bearer "+token}
+
+            # contact server for model
+            print(f"Attempting to download model...this may take a while")
+            ckpt_request = requests.get(model_url, headers=headers)
+            request_status = ckpt_request.status_code
+
+            # inform user of errors
+            if request_status == 403:
+              raise ConnectionRefusedError("You have not accepted the license for this model.")
+            elif request_status == 404:
+              raise ConnectionError("Could not make contact with server")
+            elif request_status != 200:
+              raise ConnectionError(f"Some other error has ocurred - response code: {request_status}")
+
+            # write to model path
+            if request_status == 200:
+                print('model downloaded!')
+                with open(os.path.join(models_path, model_checkpoint), 'wb') as model_file:
+                    model_file.write(ckpt_request.content)
+
+        if not os.path.exists('k-diffusion/k_diffusion/__init__.py'):
+                os.makedirs(models_path, exist_ok=True)
+                os.makedirs(output_path, exist_ok=True)
+                setup_environment = True
+                print_subprocess = False
+                if setup_environment:
+
+                    print("Setting up environment...")
+                    start_time = time.time()
+                  
+
+                    all_process = [
+
+                        ['git', 'clone', 'https://github.com/deforum/stable-diffusion'],
+                        ['git', 'clone', 'https://github.com/shariqfarooq123/AdaBins.git'],
+                        ['git', 'clone', 'https://github.com/isl-org/MiDaS.git'],
+                        ['git', 'clone', 'https://github.com/MSFTserver/pytorch3d-lite.git'],
+
+                    ]
+                    for process in all_process:
+                        running = subprocess.run(process,stdout=subprocess.PIPE).stdout.decode('utf-8')
+                        if print_subprocess:
+                            print(running)
+
+                    print(subprocess.run(['git', 'clone', 'https://github.com/deforum/k-diffusion/'], stdout=subprocess.PIPE).stdout.decode('utf-8'))
+                    with open('k-diffusion/k_diffusion/__init__.py', 'w') as f:
+                        f.write('')
+                    end_time = time.time()
+                    print(f"Environment set up in {end_time-start_time:.0f} seconds")
+                    
+        if not os.path.exists('/workspace/temp.temp'):
+            print('packages setups...')
+            p_i=0
+            all_process = [
+                        ['pip', 'install', 'torch==1.12.1+cu113', 'torchvision==0.13.1+cu113', '--extra-index-url', 'https://download.pytorch.org/whl/cu113'],
+                        ['pip', 'install', 'pandas', 'scikit-image', 'opencv-python', 'accelerate', 'ftfy', 'jsonmerge', 'matplotlib', 'resize-right', 'timm', 'torchdiffeq'],
+                        ['pip', 'install', 'flask_cors', 'flask_ngrok', 'pyngrok==4.1.1', 'omegaconf==2.2.3', 'einops==0.4.1', 'pytorch-lightning==1.7.4', 'torchmetrics==0.9.3', 'torchtext==0.13.1', 'transformers==4.21.2', 'kornia==0.6.7'],
+                        ['pip', 'install', '-e', 'git+https://github.com/CompVis/taming-transformers.git@master#egg=taming-transformers'],
+                        ['pip', 'install', '-e', 'git+https://github.com/openai/CLIP.git@main#egg=clip'],
+                        ['apt-get', 'update'],
+                        ['apt-get', 'install', '-y', 'python3-opencv']
+                    ]
+
+            for process in all_process:
+                running = subprocess.run(process,stdout=subprocess.PIPE).stdout.decode('utf-8')
+                print(running)
+                disp.clear_output(wait=True)
+                print('please wait...')
+                p_i += 1
+            
+            with open('/workspace/temp.temp', 'w') as f:
+                f.write('temp')
+
+        run(nt)
 def run(nt):
     print('starting...')
     from IPython import display as disp
