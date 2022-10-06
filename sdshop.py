@@ -7,7 +7,7 @@ models_path = "/workspace/"
 output_path = "/workspace/"
 
 import os
-import subprocess, time
+import subprocess, time, requests
 sys.path.extend([
     'src/taming-transformers',
     'src/clip',
