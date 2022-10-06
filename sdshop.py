@@ -101,9 +101,9 @@ def run_server(hf='',nt=''):
                 running = subprocess.run(process,stdout=subprocess.PIPE).stdout.decode('utf-8')
                 print(running)
                 disp.clear_output(wait=True)
-                print('please wait...')
                 p_i += 1
-            
+                print('please wait...',p_i,'/',7)
+                
             with open('/workspace/temp.temp', 'w') as f:
                 f.write('temp')
 
