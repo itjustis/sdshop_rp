@@ -123,6 +123,7 @@ def run(nt):
             import torch.nn as nn
             import torchvision.transforms as T
             import torchvision.transforms.functional as TF
+            import urllib
 
             from contextlib import contextmanager, nullcontext
             from einops import rearrange, repeat
@@ -821,12 +822,12 @@ def run(nt):
                   headers = r.headers
                   if headers["message"] == "hello":
                     return Response(response="{}", status=200)
-                  else:
+                  else:      
                     return abort(fail_res)
                 except:
                   return abort(fail_res)
 
-            #display.clear_output()
+            #display.clear_output() 
             @app.route("/api/img2img", methods=["POST"])
             def img2img():
               try:
@@ -838,8 +839,9 @@ def run(nt):
                 seed = int(headers["seed"])
                 variation = int(headers['variation'])+1
                 prompt = headers['prompt']
+                prompt=urllib.parse.unquote(prompt)
 
-                args.seed = seed
+                args.seed = seed  
                 args.prompt = prompt
                 args.strength = float(headers['strength'])
                 args.steps = int(headers['steps'])
@@ -902,7 +904,7 @@ def run(nt):
                 print("type error: " + str(e))
                 if (args.sampler=='plms'):
                   return abort(fail_res)
-                else:
+                else:      
                   return abort(fail_res)
 
 
@@ -922,6 +924,8 @@ def run(nt):
                 ######
                 seed = int(headers["seed"])
                 prompt = headers['prompt']
+                prompt=urllib.parse.unquote(prompt)
+
                 ######
                 if not  headers['sampler'] in samplers_list:
                   args.sampler = 'ddim'
@@ -940,9 +944,10 @@ def run(nt):
                 args.seed = seed
                 args.prompt = prompt
                 args.strength = 0
-                args.steps = int(headers['steps'])
+                args.steps = int(headers['steps']) 
                 args.scale = float(headers['scale'])
                 #########
+
 
                 seed_everything(seed)
 
@@ -976,11 +981,7 @@ def run(nt):
                   return abort(res)
 
 
-            if len(nt)>0:
-                print(subprocess.run(['ngrok', 'authtoken', nt]))
-            else:
-                print ('looks like no ngrok token provided')
             run_with_ngrok(app)
-            disp.clear_output(wait=True)
-            print('COPY & PASTE NGROK URL  ( "running on..." ) TO PHOTOSHOP PLUGIN API FIELD')
+            print('************************* COPY & PASTE NGROK URL  ( "running on..." ) TO PHOTOSHOP PLUGIN API FIELD ******************************************')
             app.run()
+
