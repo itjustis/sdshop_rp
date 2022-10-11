@@ -979,8 +979,14 @@ def run(nt):
                         status=400,
                     )
                   return abort(res)
+                
+            ngrok_token=nt
 
+            if len(ngrok_token)>0 and ngrok_token != 'xxxxxx':
+                  print(subprocess.run(['ngrok', 'authtoken', ngrok_token], stdout=subprocess.PIPE).stdout.decode('utf-8'))
 
+            else:
+                  print('no ngrok token provided. session will expire in 2 hours')
             run_with_ngrok(app)
             print('************************* COPY & PASTE NGROK URL  ( "running on..." ) TO PHOTOSHOP PLUGIN API FIELD ******************************************')
             app.run()
