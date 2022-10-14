@@ -29,7 +29,7 @@ def run_server(hf='',nt=''):
     else:
         print('setup... first run might take ~10 minutes')
         if not os.path.exists(models_path + '/sd-v1-4.ckpt'):
-        
+           huggin_token = hf        
            subprocess.run(['wget --header='+huggin_token+' https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt'], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
 
