@@ -108,6 +108,12 @@ def run_server(hf='',nt=''):
                 f.write('temp')
 
         run(nt)
+
+rendered_frames=[]
+keyframes_strength=0.5
+video_steps=20
+frames=5
+total_frames = 0
 def run(nt):
     print('starting...')
     from IPython import display as disp
@@ -446,6 +452,240 @@ def run(nt):
                                         image = Image.fromarray(x_sample.astype(np.uint8))
                                         results.append(image)
                 return results
+            
+            
+           
+
+            def slerp3( low, high,val):
+                low_norm = low/torch.norm(low, dim=1, keepdim=True)
+                high_norm = high/torch.norm(high, dim=1, keepdim=True)
+                omega = torch.acos((low_norm*high_norm).sum(1))
+                so = torch.sin(omega)
+                res = (torch.sin((1.0-val)*omega)/so).unsqueeze(1)*low + (torch.sin(val*omega)/so).unsqueeze(1) * high
+                return res
+
+            def ret_lat(args,seed,prompt,di=False):
+              global z_enc_1,z_enc_2,c1,c2,all_enc,interp_prompts,all_lats,t_enc
+
+
+              args.prompt = prompt
+              args.seed=seed
+
+              results = generate(args, return_latent=True, return_sample=False)
+              latent, image = results[0], results[1]
+              if di:
+                display.display(image)
+              return latent, image
+
+            def lats_all(images, prompts):
+              global z_enc_1,z_enc_2,c1,c2,all_enc,interp_prompts,all_lats,seed 
+
+              all_lats = []
+              imgs=[]
+              for sp, img in zip(prompts, images): 
+                #print(type(img))
+                args.init_image = img
+                args.use_init = True 
+                args.strength = 0.99 
+                #print(str(sp)+',')
+                lat,img=ret_lat(args,sp[1],sp[0], di=False)    
+                if all_lats==[]:
+                  imgs = np.asarray(img)
+                else: 
+                  imgs = np.concatenate((imgs, np.asarray(img)), axis=1)
+                all_lats.append(lat)
+
+              return all_lats
+
+
+            import math
+            #@title defs
+            def ParametricBlend( t):
+              sqt = t * t
+              return (sqt / (2.0 * (sqt - t) + 1.0))
+
+            def CustomBlend( x):
+              r=0
+              if x >= 0.5:
+                r =  x * (1 - x) *-2+1
+              else:
+                r =  x * (1 - x) *2
+              return r
+
+
+            def BezierBlend( t):
+              return t * t * (3.0 - 2.0 * t)
+
+            def blend(t,ip):
+              if ip=='bezier':
+                return BezierBlend(t)
+              elif ip=='parametric':
+                return ParametricBlend(t)  
+              elif ip=='inbetween':
+                return CustomBlend(t)  
+              else:
+                return t
+
+            def slerp(low, high,val):
+                low_norm = low/torch.norm(low, dim=1, keepdim=True)
+                high_norm = high/torch.norm(high, dim=1, keepdim=True)
+                omega = torch.acos((low_norm*high_norm).sum(1))
+                so = torch.sin(omega)
+                res = (torch.sin((1.0-val)*omega)/so).unsqueeze(1)*low + (torch.sin(val*omega)/so).unsqueeze(1) * high
+                return res
+            def slerp_theta(z1, z2,theta): return math.cos(theta) * z1 + math.sin(theta) * z2 
+
+
+            def slerp2( v0, v1, t, DOT_THRESHOLD=0.9995):
+                c = False
+                if not isinstance(v0,np.ndarray):
+                    c = True
+                    v0 = v0.detach().cpu().numpy()
+                if not isinstance(v1,np.ndarray):
+                    c = True
+                    v1 = v1.detach().cpu().numpy()
+                # Copy the vectors to reuse them later
+                v0_copy = np.copy(v0)
+                v1_copy = np.copy(v1)
+                # Normalize the vectors to get the directions and angles
+                v0 = v0 / np.linalg.norm(v0)
+                v1 = v1 / np.linalg.norm(v1)
+                # Dot product with the normalized vectors (can't use np.dot in W)
+                dot = np.sum(v0 * v1)
+                # If absolute value of dot product is almost 1, vectors are ~colineal, so use lerp
+                if np.abs(dot) > DOT_THRESHOLD:
+                    return torch.lerp(t, v0_copy, v1_copy)
+                # Calculate initial angle between v0 and v1
+                theta_0 = np.arccos(dot)
+                sin_theta_0 = np.sin(theta_0)
+                # Angle at timestep t
+                theta_t = theta_0 * t
+                sin_theta_t = np.sin(theta_t)
+                # Finish the slerp algorithm
+                s0 = np.sin(theta_0 - theta_t) / sin_theta_0
+                s1 = sin_theta_t / sin_theta_0
+                v2 = s0 * v0_copy + s1 * v1_copy
+                if c:
+                    res = torch.from_numpy(v2).to("cuda").type(model.dtype)
+                else:
+                    res = v2
+                return res
+            def slerp2(v0, v1, t, DOT_THRESHOLD=0.9995):
+                """helper function to spherically interpolate two arrays v1 v2"""
+
+                if not isinstance(v0, np.ndarray):
+                    inputs_are_torch = True
+                    input_device = v0.device
+                    v0 = v0.cpu().numpy()
+                    v1 = v1.cpu().numpy()
+
+                dot = np.sum(v0 * v1 / (np.linalg.norm(v0) * np.linalg.norm(v1)))
+                if np.abs(dot) > DOT_THRESHOLD:
+                    v2 = (1 - t) * v0 + t * v1
+                else:
+                    theta_0 = np.arccos(dot)
+                    sin_theta_0 = np.sin(theta_0)
+                    theta_t = theta_0 * t
+                    sin_theta_t = np.sin(theta_t)
+                    s0 = np.sin(theta_0 - theta_t) / sin_theta_0
+                    s1 = sin_theta_t / sin_theta_0
+                    v2 = s0 * v0 + s1 * v1
+
+                if inputs_are_torch:
+                    v2 = torch.from_numpy(v2).to(device).type(model.dtype)
+
+                return v2
+            
+            
+            import random
+
+      
+            def prepare_frames(images,total_frames):
+              global z_enc_1,z_enc_2,c1,c2,all_enc,interp_prompts,all_lats,t_enc, seed, frames
+
+
+              precision_scope = autocast if args.precision == "autocast" else nullcontext
+              sampler = DDIMSampler(model)
+              sampler.make_schedule(ddim_num_steps=video_steps, ddim_eta=0, verbose=False)
+              frames=total_frames
+              length=2
+
+
+              with torch.no_grad():
+                with precision_scope("cuda"):
+                    with model.ema_scope():        
+                      t_enc = int((1.0-keyframes_strength) * video_steps)
+
+                      uc = model.get_learned_conditioning( [""])
+                      all_enc=[]
+
+                      for lat in all_lats:  
+                          all_enc.append (sampler.stochastic_encode(lat, torch.tensor([t_enc]).to(device)) )
+
+                      prompts=[interp_prompts[0][0],interp_prompts[1][0]]        
+                      seed_everything(args.seed)
+
+
+                      z_enc_1 = all_enc[0]
+                      z_enc_2 = all_enc[1]
+
+                      c1 = model.get_learned_conditioning(prompts[0])
+                      c2 = model.get_learned_conditioning(prompts[1])
+
+
+            
+
+            def gen_frames():
+              sampler = DDIMSampler(model)
+              sampler.make_schedule(ddim_num_steps=video_steps, ddim_eta=0, verbose=False)
+
+
+
+
+              #c = torch.lerp(  c1, c2, t ). init_latent = model.get_first_stage_encoding(model.encode_first_stage(args.init_sample))
+              c = c1
+              #q = interpolate(  all_lats[0], all_lats[1], t )
+
+              precision_scope = autocast if args.precision == "autocast" else nullcontext
+
+              rf = []
+
+
+              with torch.no_grad():
+                      with precision_scope("cuda"):
+                          with model.ema_scope():
+                              uc = model.get_learned_conditioning( [""])
+
+                              for i in range(frames):
+                                results = []
+
+                                #all_enc.append (sampler.stochastic_encode(lat, torch.tensor([t_enc]).to(device)) )
+                                # z_enc = sampler.stochastic_encode(q, torch.tensor([t_enc]).to(device), noise=start_code)
+
+                                t = blend((i/frames),'linear')
+                                interpolate = slerp3
+                                #q = (slerp3(  all_enc[0], all_enc[1], t )+slerp2(  all_enc[0], all_enc[1], t )+slerp(  all_enc[0], all_enc[1], t ))/3.
+                                q = slerp3(  all_enc[0], all_enc[1], t )
+
+
+                                samples = sampler.decode(q, c, t_enc, unconditional_guidance_scale=args.scale,
+                                                                  unconditional_conditioning=uc,)
+
+
+
+                                x_samples = model.decode_first_stage(samples)
+                                x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)                
+
+                                for x_sample in x_samples:
+                                    x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
+                                    image = Image.fromarray(x_sample.astype(np.uint8))
+                                    results.append(image)
+
+                                rf.append(results[0])
+
+                                #return results
+                              return rf
+
 
 
             #@markdown **Select and Load Model**
@@ -979,6 +1219,121 @@ def run(nt):
                         status=400,
                     )
                   return abort(res)
+
+            @app.route("/api/animate", methods=["POST"])            
+            def animate():
+              global z_enc_1,z_enc_2,c1,c2,all_enc,interp_prompts,all_lats,images,seed, frames, total_frames, rendered_frames
+
+
+              r = request
+              headers = r.headers
+
+              #print(r.headers)
+              inpaint = headers["inpaint"]
+              ######
+              #seed = int(headers["seed"])
+              seed = 369
+              variation = int(headers['variation'])
+              prompt = headers['prompt']
+              prompt=urllib.parse.unquote(prompt)
+
+              args.seed = seed  
+              args.prompt = prompt
+              args.strength = float(headers['strength'])
+              args.steps = int(headers['steps'])
+
+              total_frames = int(headers['total_frames'])
+
+              if not  headers['sampler'] in samplers_list:
+                args.sampler = 'euler'
+              else:
+                args.sampler =  headers['sampler']
+
+              if args.sampler == 'ddim':
+                args.ddim_eta = float(headers['ddim_eta'])
+              else:
+                args.ddim_eta = 0
+
+
+              args.use_alpha_as_mask = False
+              args.use_mask = False
+              W_in, H_in = int(headers["W"]), int(headers["H"])
+              W, H = map(lambda x: x - x % 64, (W_in, H_in))
+
+              args.W = W
+              args.H = H
+
+              args.scale = float(headers['scale'])
+
+
+              data = r.data
+              #print('kek', data)
+
+              #random.seed()
+              #interp_prompts=[[prompt,random.randint(0, 2**32)],[prompt,random.randint(0, 2**32)]]
+              interp_prompts=[[prompt,seed],[prompt,seed]]
+              frame = variation
+              frames = total_frames
+              print('state', 1,frame)
+
+
+
+              if frame == 0:
+                rendered_frames=[]
+                #start_code = torch.randn([1, args.C, W // args.f, W // args.f], device=device)
+                images=[]
+                for _img in data.decode().split("_"):
+                  f = BytesIO()
+                  f.write(base64.b64decode(_img.encode('utf-8')))
+                  f.seek(0)
+                  _img = Image.open(f).convert("RGB")
+
+
+                  newsize = (W, H)
+
+                  _img = _img.resize(newsize)
+                  images.append(_img)
+
+                all_lats = lats_all(images, interp_prompts)
+
+                prepare_frames(images,total_frames)
+
+                rendered_frames = gen_frames()
+
+
+              print('frame # '+str(frame))
+
+
+              #t = blend((frame/total_frames),'linear')
+              #interpolate = slerp2
+
+              #c = torch.lerp(  c1, c2, t )
+              #c = c1
+              #q = interpolate(  z_enc_1, z_enc_2, t )
+
+              #args.init_latent=q
+              #args.init_image=None
+              #args.use_init=False
+              #args.strength_0_no_init=True
+              #args.strength=0.5
+
+
+              #results = generate(args, return_latent=False, return_sample=False)
+
+
+
+              #results= gen_frame(frame)
+              results = rendered_frames[frame]
+
+
+              #results = generate(args, return_latent=False, return_sample=False)
+
+              newsize = (W_in, H_in)
+              img = results
+              img = img.resize(newsize)
+
+              return_image = imgtobytes(np.asarray(img))
+              return Response(response=return_image, status=200, mimetype="image/png")
                 
             ngrok_token=nt
 
