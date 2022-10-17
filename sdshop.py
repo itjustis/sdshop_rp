@@ -37,8 +37,22 @@ def run_server(hf='',nt=''):
 
             # contact server for model
             print(f"Attempting to download model...this may take a while")
-            subprocess.run(['wget --header='+headers+' https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt'], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+            ckpt_request = requests.get(model_url, headers=headers)
+            request_status = ckpt_request.status_code
 
+            # inform user of errors
+            if request_status == 403:
+              raise ConnectionRefusedError("You have not accepted the license for this model.")
+            elif request_status == 404:
+              raise ConnectionError("Could not make contact with server")
+            elif request_status != 200:
+              raise ConnectionError(f"Some other error has ocurred - response code: {request_status}")
+
+            # write to model path
+            if request_status == 200:
+                print('model downloaded!')
+                with open(os.path.join(models_path, 'sd-v1-4.ckpt'), 'wb') as model_file:
+                    model_file.write(ckpt_request.content)
 
         if not os.path.exists('k-diffusion/k_diffusion/__init__.py'):
                 os.makedirs(models_path, exist_ok=True)
