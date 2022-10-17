@@ -37,7 +37,7 @@ def run_server(hf='',nt=''):
 
             # contact server for model
             print(f"Attempting to download model...this may take a while")
-            subprocess.run(['wget --header='+token+' https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt'], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+            subprocess.run(['wget --header='+headers+' https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt'], shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
 
         if not os.path.exists('k-diffusion/k_diffusion/__init__.py'):
