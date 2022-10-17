@@ -114,6 +114,7 @@ keyframes_strength=0.5
 video_steps=20
 frames=5
 total_frames = 0
+interpolation = 'slerp'
 def run(nt):
     print('starting...')
     from IPython import display as disp
@@ -663,9 +664,15 @@ def run(nt):
                                 # z_enc = sampler.stochastic_encode(q, torch.tensor([t_enc]).to(device), noise=start_code)
 
                                 t = blend((i/frames),'linear')
-                                interpolate = slerp3
+                                if interpolation == 'slerp':
+                                    interpolate = slerp
+                                if interpolation == 'slerp2':
+                                    interpolate = slerp2
+                                if interpolation == 'slerp3':
+                                    interpolate = slerp3
+                                
                                 #q = (slerp3(  all_enc[0], all_enc[1], t )+slerp2(  all_enc[0], all_enc[1], t )+slerp(  all_enc[0], all_enc[1], t ))/3.
-                                q = slerp3(  all_enc[0], all_enc[1], t )
+                                q = interpolate(  all_enc[0], all_enc[1], t )
 
 
                                 samples = sampler.decode(q, c, t_enc, unconditional_guidance_scale=args.scale,
@@ -1222,7 +1229,7 @@ def run(nt):
 
             @app.route("/api/animate", methods=["POST"])            
             def animate():
-              global z_enc_1,z_enc_2,c1,c2,all_enc,interp_prompts,all_lats,images,seed, frames, total_frames, rendered_frames
+              global z_enc_1,z_enc_2,c1,c2,all_enc,interp_prompts,all_lats,images,seed, frames, total_frames, rendered_frames, interpolation
 
 
               r = request
@@ -1235,6 +1242,7 @@ def run(nt):
               seed = 369
               variation = int(headers['variation'])
               prompt = headers['prompt']
+              interpolation = headers['interpolation']
               prompt=urllib.parse.unquote(prompt)
 
               args.seed = seed  
