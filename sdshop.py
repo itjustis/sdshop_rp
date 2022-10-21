@@ -19,16 +19,24 @@ sys.path.extend([
 ])
 
 model_sha256 = 'fe4efff1e174c627256e44ec2991ba279b3816e364b49f9be2abc0b3ff3f8556'
-model_url =  'https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt'
+model_url = 'https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/resolve/main/sd-v1-4.ckpt'
+model_url_runway_1_5 = 'https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt'
 
-def run_server(hf='',nt=''):
+def run_server(hf='',nt='',model='sd-1.4'):
     from IPython import display as disp
+    if model=='sd-1.4':
+        model_f='/sd-v1-4.ckpt'
+    if model=='rw-1.5':
+        model_f='/v1-5-pruned-emaonly.ckpt'
+        model_url = model_url_runway_1_5
+    else:
+        model_f='/sd-v1-4.ckpt'
     
     if hf=='xxxxxx' or nt=='xxxxxx':
         print('error: no tokens provided')
     else:
         print('setup... first run might take ~10 minutes')
-        if not os.path.exists(models_path + '/sd-v1-4.ckpt'):
+        if not os.path.exists(models_path + model_f):
         
             url = model_url
             token=hf
@@ -42,11 +50,15 @@ def run_server(hf='',nt=''):
 
             # inform user of errors
             if request_status == 403:
+              
               raise ConnectionRefusedError("You have not accepted the license for this model.")
             elif request_status == 404:
               raise ConnectionError("Could not make contact with server")
             elif request_status != 200:
               raise ConnectionError(f"Some other error has ocurred - response code: {request_status}")
+            
+            if request_status != 200:
+                print(' downloading error : request_status')
 
             # write to model path
             if request_status == 200:
@@ -112,7 +124,7 @@ def run(nt):
     print('starting...')
     from IPython import display as disp
     import os
-    if os.path.exists(models_path + '/sd-v1-4.ckpt'):
+    if os.path.exists(models_path + model_f):
             import gc, math, os, pathlib, subprocess, sys, time
             import cv2
             import numpy as np
@@ -479,7 +491,7 @@ def run(nt):
             print(f"Using config: {ckpt_config_path}")
 
             # checkpoint path or download
-            ckpt_path = custom_checkpoint_path if model_checkpoint == "custom" else os.path.join(models_path, model_checkpoint)
+            ckpt_path = custom_checkpoint_path if model_checkpoint == "custom" else os.path.join(models_path, model_f)
             ckpt_valid = True
             if os.path.exists(ckpt_path):
                 print(f"{ckpt_path} exists")
@@ -840,6 +852,9 @@ def run(nt):
                 variation = int(headers['variation'])+1
                 prompt = headers['prompt']
                 prompt=urllib.parse.unquote(prompt)
+                
+                
+                
 
                 args.seed = seed  
                 args.prompt = prompt
@@ -896,8 +911,19 @@ def run(nt):
                 newsize = (W_in, H_in)
                 img = results[0]
                 img = img.resize(newsize)
+                
+                img = np.asarray(img)
+                
+                try:
+                    correction = int(headers["histogram_correction"])
+                    if correction:
+                        x = img.astype('float32')
+                        y = np.asarray(args.init_image).astype('float32')
 
-                return_image = imgtobytes(np.asarray(img))
+                        img = match_histograms(x, y,multichannel=True)
+                    
+
+                return_image = imgtobytes(img)
                 return Response(response=return_image, status=200, mimetype="image/png")
 
               except Exception as e:
