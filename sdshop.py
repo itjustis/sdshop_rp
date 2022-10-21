@@ -119,8 +119,8 @@ def run_server(hf='',nt='',model='sd-1.4'):
             with open('/workspace/temp.temp', 'w') as f:
                 f.write('temp')
 
-        run(nt)
-def run(nt):
+        run(nt,model_f)
+def run(nt, model_f='/sd-v1-4.ckpt'):
     print('starting...')
     from IPython import display as disp
     import os
