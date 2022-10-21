@@ -23,6 +23,7 @@ model_url = 'https://huggingface.co/CompVis/stable-diffusion-v-1-4-original/reso
 model_url_runway_1_5 = 'https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.ckpt'
 
 def run_server(hf='',nt='',model='sd-1.4'):
+    global model_url
     from IPython import display as disp
     if model=='sd-1.4':
         model_f='sd-v1-4.ckpt'
