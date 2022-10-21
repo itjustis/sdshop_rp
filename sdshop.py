@@ -25,18 +25,19 @@ model_url_runway_1_5 = 'https://huggingface.co/runwayml/stable-diffusion-v1-5/re
 def run_server(hf='',nt='',model='sd-1.4'):
     from IPython import display as disp
     if model=='sd-1.4':
-        model_f='/sd-v1-4.ckpt'
+        model_f='sd-v1-4.ckpt'
     if model=='rw-1.5':
-        model_f='/v1-5-pruned-emaonly.ckpt'
+        model_f='v1-5-pruned-emaonly.ckpt'
         model_url = model_url_runway_1_5
     else:
-        model_f='/sd-v1-4.ckpt'
+        model_f='sd-v1-4.ckpt'
+        
     
     if hf=='xxxxxx' or nt=='xxxxxx':
         print('error: no tokens provided')
     else:
         print('setup... first run might take ~10 minutes')
-        if not os.path.exists(models_path + model_f):
+        if not os.path.exists(os.path.join(models_path, model_f)):
         
             url = model_url
             token=hf
@@ -65,6 +66,7 @@ def run_server(hf='',nt='',model='sd-1.4'):
                 print('model downloaded!')
                 with open(os.path.join(models_path, model_f), 'wb') as model_file:
                     model_file.write(ckpt_request.content)
+            print('saved to', os.path.join(models_path, model_f))
 
         if not os.path.exists('k-diffusion/k_diffusion/__init__.py'):
                 os.makedirs(models_path, exist_ok=True)
@@ -915,14 +917,14 @@ def run(nt, model_f='/sd-v1-4.ckpt'):
                 img = np.asarray(img)
                 
                 try:
-                    correction = int(headers["histogram_correction"])
-                    if correction:
+                    correction = (headers["histogram_correction"])
+                    if correction == 'true':
                         x = img.astype('float32')
                         y = np.asarray(args.init_image).astype('float32')
                         img = match_histograms(x, y,multichannel=True)
                 except:
-                    correction = false
-                    
+                    correction = 'false'
+                
 
                 return_image = imgtobytes(img)
                 return Response(response=return_image, status=200, mimetype="image/png")
@@ -1017,3 +1019,5 @@ def run(nt, model_f='/sd-v1-4.ckpt'):
             run_with_ngrok(app)
             print('************************* COPY & PASTE NGROK URL  ( "running on..." ) TO PHOTOSHOP PLUGIN API FIELD ******************************************')
             app.run()
+    else:
+        print ('cant find model at '+models_path + model_f)
