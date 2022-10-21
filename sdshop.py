@@ -63,7 +63,7 @@ def run_server(hf='',nt='',model='sd-1.4'):
             # write to model path
             if request_status == 200:
                 print('model downloaded!')
-                with open(os.path.join(models_path, 'sd-v1-4.ckpt'), 'wb') as model_file:
+                with open(os.path.join(models_path, model_f), 'wb') as model_file:
                     model_file.write(ckpt_request.content)
 
         if not os.path.exists('k-diffusion/k_diffusion/__init__.py'):
@@ -919,8 +919,9 @@ def run(nt):
                     if correction:
                         x = img.astype('float32')
                         y = np.asarray(args.init_image).astype('float32')
-
                         img = match_histograms(x, y,multichannel=True)
+                except:
+                    correction = false
                     
 
                 return_image = imgtobytes(img)
