@@ -151,7 +151,7 @@ def run(nt, model_f='/sd-v1-4.ckpt'):
             from types import SimpleNamespace
             from torch import autocast
 
-            from helpers import DepthModel, sampler_fn
+            from helpers import sampler_fn
             from k_diffusion.external import CompVisDenoiser
             from ldm.util import instantiate_from_config
             from ldm.models.diffusion.ddim import DDIMSampler
