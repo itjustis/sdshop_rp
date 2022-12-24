@@ -84,7 +84,7 @@ def run_server(hf='',nt='',model='sd-1.4'):
 
                         ['git', 'clone', 'https://github.com/deforum/stable-diffusion'],
                         ['git', 'clone', 'https://github.com/shariqfarooq123/AdaBins.git'],
-                        ['git', 'clone', 'https://github.com/isl-org/MiDaS.git'],
+                        ['git', 'clone','--depth','1','--branch','v3', 'https://github.com/isl-org/MiDaS.git'],
                         ['git', 'clone', 'https://github.com/MSFTserver/pytorch3d-lite.git'],
 
                     ]
