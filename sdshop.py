@@ -30,6 +30,9 @@ def run_server(hf='',nt='',model='sd-1.4'):
     if model=='rw-1.5':
         model_f='v1-5-pruned-emaonly.ckpt'
         model_url = model_url_runway_1_5
+    elif model.startswith('http'):
+        model_f = os.path.basename(model)        
+        model_url = model
     else:
         model_f='sd-v1-4.ckpt'
         
